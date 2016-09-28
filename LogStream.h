@@ -41,8 +41,7 @@ class FixBuffer
 
     void append(const char* data, size_t len)
     {
-        _buffer.resize(_buffer.size() + len);
-        std::copy(data, data+len, _buffer.end()-len); 
+        std::copy(data, data+len, back_inserter(_buffer)); 
     }
 
     std::string toString() const
