@@ -29,10 +29,12 @@ class FixBuffer
     {
     }
     
-    // delete copy ctor/assignment
+    // 删除拷贝构造和拷贝赋值
     FixBuffer(const FixBuffer&) = delete;
     FixBuffer& operator=(const FixBuffer&) = delete;
 
+    // 因为声明了析构函数，移动构造和移动赋值也会被删除
+    
     std::vector<char>& buffer() { return _buffer; }
 
     size_t size() const noexcept { return _buffer.size(); }
