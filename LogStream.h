@@ -35,9 +35,11 @@ class FixBuffer
 
     // 因为声明了析构函数，移动构造和移动赋值也会被删除
     
-    std::vector<char>& buffer() { return _buffer; }
+    std::vector<char>& buffer() noexcept { return _buffer; }
 
     size_t size() const noexcept { return _buffer.size(); }
+
+    const char* data() const noexcept { return _buffer.data(); }
 
     void append(const char* data, size_t len)
     {
