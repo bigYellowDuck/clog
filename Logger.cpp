@@ -1,13 +1,23 @@
 #include "Logger.h"
 #include "Localtime.h"
+#include "BlockingQueue.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+//#include <future>
+//#include <utility>
 
 namespace clog
 {
+
+//BlockingQueue<std::pair<const char*, size_t>> queue;
+
+thread_local pid_t tid = ::syscall(SYS_gettid);
 
 thread_local char t_errnobuf[512];
 
@@ -100,6 +110,22 @@ Logger::OutputFunc g_output = defaultOutput;
 Logger::FlushFunc g_flush = defaultFlush;
 Logger::LogLevel g_logLevel = Logger::INFO;  // 默认等级INFO
 
+/*
+void concurrentFunc()  // 多线程场景下单独使用一个线程来写日志
+{
+    while (true)
+    {
+        auto pair(std::move(queue.take()));
+        defaultOutput(pair.first, pair.second);
+    }
+}
+
+void concurrentOutput(const char* msg, size_t len)
+{
+    queue.put(std::make_pair(msg, len));
+}
+
+*/
 }  // end of namespace clog
 
 using namespace clog;
@@ -129,6 +155,7 @@ Logger::Impl::Impl(LogLevel level, int savedErrno, const Logger::SourceFile& fil
       _time(Localtime::now()),
       _stream()
 {
+    _stream << tid  << ' ';
     _stream << _time.toFormattedString() << ' ';
     _stream << T(LogLevelName[_level], 6);
     
@@ -190,6 +217,14 @@ void Logger::setLogLevel(Logger::LogLevel level) noexcept
 {
     g_logLevel = level;
 }
+
+/*
+void Logger::setConcurrentMode()
+{
+    setOutput(concurrentOutput);
+    auto f =  std::async(std::launch::async, concurrentFunc);
+}
+*/
 
 void Logger::setOutput(Logger::OutputFunc output) noexcept
 {

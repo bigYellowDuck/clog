@@ -66,6 +66,8 @@ class SourceFile
     static LogLevel logLevel() noexcept;
     static void setLogLevel(LogLevel level) noexcept;
 
+//    static void setConcurrentMode();
+
     using OutputFunc = void (*)(const char* msg, size_t len);
     using FlushFunc = void (*)();
     static void setOutput(OutputFunc) noexcept;

@@ -9,3 +9,5 @@ set(CMAKE_CXX_COMPLIER "clang++")
 aux_source_directory(. DIR_SRCS)
 
 add_executable(testLogStream ${DIR_SRCS})
+
+target_link_libraries(testLogStream pthread)
