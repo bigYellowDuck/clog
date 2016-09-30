@@ -4,12 +4,12 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 namespace clog
 {
 
 thread_local char t_errnobuf[512];
-
 
 const char* strerror_tl(int savedErrno)
 {
@@ -54,14 +54,46 @@ inline LogStream& operator<<(LogStream&s ,Logger::SourceFile file)
     return s;
 }
 
+std::string getLogFileName()
+{
+    std::string filename("logfile");
+
+    char timebuf[32];
+    struct tm tm_time;
+    time_t now = time(NULL);
+    localtime_r(&now, &tm_time);
+    strftime(timebuf, sizeof(timebuf), ".%Y%m%d-%H%M%S", &tm_time);
+    filename += timebuf;
+
+    filename += ".log";
+
+    return filename;
+}
+
+const std::string g_logFileName = std::move(getLogFileName());
+FILE* g_fileStream = ::fopen(g_logFileName.data(), "ab");
+
 void defaultOutput(const char* msg, size_t len)
 {
-    fwrite(msg, 1, len, stdout);
+    if (g_fileStream == NULL)
+    {
+        fwrite(msg, 1, len, stdout);
+        const char* errorStr = "fail to call open";
+        fwrite(errorStr, 1, strlen(errorStr), stdout);
+        Logger::setLogLevel(Logger::FATAL);
+    }
+    else 
+    {
+        fwrite(msg, 1, len, g_fileStream);
+    }
 }
 
 void defaultFlush()
 {
-    fflush(stdout);
+    if (g_fileStream == NULL)
+        fflush(stdout);
+    else 
+        fflush(g_fileStream);
 }
 
 Logger::OutputFunc g_output = defaultOutput;
@@ -82,7 +114,7 @@ class Logger::Impl
     int _line;
     Localtime _time;
     LogStream _stream;
-    
+
     void finish();
 
     Impl(LogLevel level, int savedErrno, const Logger::SourceFile& file, int line);

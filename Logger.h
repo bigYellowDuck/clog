@@ -62,7 +62,7 @@ class SourceFile
     ~Logger();
 
     LogStream& stream() noexcept;
-
+    
     static LogLevel logLevel() noexcept;
     static void setLogLevel(LogLevel level) noexcept;
 
