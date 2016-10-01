@@ -34,8 +34,10 @@ class FixBuffer
     FixBuffer& operator=(const FixBuffer&) = delete;
 
     // 因为声明了析构函数，移动构造和移动赋值也会被删除
-    
-    std::vector<char>& buffer() noexcept { return _buffer; }
+   
+    std::string& buffer() noexcept { return _buffer; }
+
+    const std::string& constBuffer() const noexcept { return _buffer; }
 
     size_t size() const noexcept { return _buffer.size(); }
 
@@ -43,19 +45,18 @@ class FixBuffer
 
     void append(const char* data, size_t len)
     {
-        std::copy(data, data+len, back_inserter(_buffer)); 
+        _buffer.append(data, len);
     }
 
     std::string toString() const
     {
-        return std::string(_buffer.cbegin(), _buffer.cend());
+        return _buffer;
     }
 
     void reset() { _buffer.clear(); }
  private:
-    std::vector<char> _buffer;
+    std::string _buffer;
 };
-
 
 class LogStream 
 {
