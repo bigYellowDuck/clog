@@ -9,13 +9,13 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-//#include <future>
-//#include <utility>
+#include <fstream>
+#include <thread>
 
 namespace clog
 {
 
-//BlockingQueue<std::pair<const char*, size_t>> queue;
+BlockingQueue<std::string> queue;
 
 thread_local pid_t tid = ::syscall(SYS_gettid);
 
@@ -81,51 +81,32 @@ std::string getLogFileName()
 }
 
 const std::string g_logFileName = std::move(getLogFileName());
-FILE* g_fileStream = ::fopen(g_logFileName.data(), "ab");
+std::ofstream logStream(g_logFileName);
 
-void defaultOutput(const char* msg, size_t len)
+void defaultOutput(const std::string& msg)
 {
-    if (g_fileStream == NULL)
-    {
-        fwrite(msg, 1, len, stdout);
-        const char* errorStr = "fail to call open";
-        fwrite(errorStr, 1, strlen(errorStr), stdout);
-        Logger::setLogLevel(Logger::FATAL);
-    }
-    else 
-    {
-        fwrite(msg, 1, len, g_fileStream);
-    }
+    logStream << msg;
 }
 
-void defaultFlush()
-{
-    if (g_fileStream == NULL)
-        fflush(stdout);
-    else 
-        fflush(g_fileStream);
-}
 
 Logger::OutputFunc g_output = defaultOutput;
-Logger::FlushFunc g_flush = defaultFlush;
 Logger::LogLevel g_logLevel = Logger::INFO;  // 默认等级INFO
 
-/*
+
 void concurrentFunc()  // 多线程场景下单独使用一个线程来写日志
 {
     while (true)
     {
-        auto pair(std::move(queue.take()));
-        defaultOutput(pair.first, pair.second);
+        auto str(std::move(queue.take()));
+        defaultOutput(str);
     }
 }
 
-void concurrentOutput(const char* msg, size_t len)
+void concurrentOutput(const std::string& msg)
 {
-    queue.put(std::make_pair(msg, len));
+    queue.put(std::move(msg));
 }
 
-*/
 }  // end of namespace clog
 
 using namespace clog;
@@ -167,7 +148,7 @@ Logger::Impl::Impl(LogLevel level, int savedErrno, const Logger::SourceFile& fil
 
 void Logger::Impl::finish()
 {
-    _stream << " - " << _file << ":" << _line << '\n'; 
+    _stream << " - " << _file << ":" << _line << "\n\0"; 
 }
 
 Logger::Logger(SourceFile file, int line)
@@ -195,10 +176,9 @@ Logger::~Logger()
 {
     _pImpl->finish();
     const FixBuffer& buffer(_pImpl->_stream.buffer());
-    g_output(buffer.data(), buffer.size());
+    g_output(std::move(buffer.constBuffer()));
     if (_pImpl->_level == FATAL)
     {
-        g_flush();
         abort();
     }
 }
@@ -218,21 +198,15 @@ void Logger::setLogLevel(Logger::LogLevel level) noexcept
     g_logLevel = level;
 }
 
-/*
 void Logger::setConcurrentMode()
 {
     setOutput(concurrentOutput);
-    auto f =  std::async(std::launch::async, concurrentFunc);
+    std::thread logThread(concurrentFunc);
+    logThread.detach();
 }
-*/
 
 void Logger::setOutput(Logger::OutputFunc output) noexcept
 {
     g_output = output;
-}
-
-void Logger::setFlush(Logger::FlushFunc flush) noexcept
-{
-    g_flush = flush;
 }
 

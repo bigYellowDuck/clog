@@ -66,12 +66,10 @@ class SourceFile
     static LogLevel logLevel() noexcept;
     static void setLogLevel(LogLevel level) noexcept;
 
-//    static void setConcurrentMode();
+    static void setConcurrentMode();
 
-    using OutputFunc = void (*)(const char* msg, size_t len);
-    using FlushFunc = void (*)();
+    using OutputFunc = void (*)(const std::string&);
     static void setOutput(OutputFunc) noexcept;
-    static void setFlush(FlushFunc) noexcept;
    
  private:
     class Impl;
