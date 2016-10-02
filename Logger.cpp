@@ -14,7 +14,8 @@
 
 namespace clog
 {
-
+std::thread logThread;
+bool _runing = false;
 BlockingQueue<std::string> queue;
 
 thread_local pid_t tid = ::syscall(SYS_gettid);
@@ -95,10 +96,21 @@ Logger::LogLevel g_logLevel = Logger::INFO;  // 默认等级INFO
 
 void concurrentFunc()  // 多线程场景下单独使用一个线程来写日志
 {
-    while (true)
+    while (_runing)
     {
         auto str(std::move(queue.take()));
         defaultOutput(str);
+    }
+
+    int size;
+
+    if((size = queue.size()) != 0)
+    {
+        for (int i=0; i<size; ++i)
+        {
+            auto str(std::move(queue.take()));
+            defaultOutput(str);
+        }
     }
 }
 
@@ -200,9 +212,17 @@ void Logger::setLogLevel(Logger::LogLevel level) noexcept
 
 void Logger::setConcurrentMode()
 {
+    _runing = true;
     setOutput(concurrentOutput);
-    std::thread logThread(concurrentFunc);
-    logThread.detach();
+    logThread = std::move(std::thread(concurrentFunc));
+
+}
+
+void Logger::finishConcurrent()
+{
+    _runing = false;
+    queue.put("\0");
+    logThread.join(); 
 }
 
 void Logger::setOutput(Logger::OutputFunc output) noexcept

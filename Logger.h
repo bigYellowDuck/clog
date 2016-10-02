@@ -67,6 +67,7 @@ class SourceFile
     static void setLogLevel(LogLevel level) noexcept;
 
     static void setConcurrentMode();
+    static void finishConcurrent();
 
     using OutputFunc = void (*)(const std::string&);
     static void setOutput(OutputFunc) noexcept;
