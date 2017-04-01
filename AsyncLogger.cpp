@@ -76,10 +76,10 @@ void AsyncLogger::threadFunc()
         assert(buffersToWrite.empty());
 
         {
-            MutexLockGuard lock(mutex_);
+            std::unique_lock<std::mutex> lock(mutex_);
             if (buffers_.empty())  // unusual usage!
             {
-                //cond_.wait_for();
+                cond_.wait_for(lock, std::chrono::seconds(flushInterval_));
             }
 
             buffers_.push_back(std::move(currentBuffer_));
@@ -96,7 +96,8 @@ void AsyncLogger::threadFunc()
 
         if (buffersToWrite.size() > 25)
         {
-            // TODO::dropping log messages 
+            // TODO::dropping log messages
+            printf("two much\n");
         }
 
         for (size_t i = 0; i < buffersToWrite.size(); ++i)
