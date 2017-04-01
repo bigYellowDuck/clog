@@ -13,16 +13,19 @@ namespace clog
 namespace detail 
 {
 
-const int kInitCapacity = 2048;
+const int kSmallBuffer = 4 * 1024;
+const int kLargeBuffer = 4 * 1024 * 1024;
 
-} // end of namespace detail
+std::string getLogFileName();
 
+
+template <int SIZE>
 class FixBuffer
 {
  public:
     FixBuffer()
     {
-        _buffer.reserve(detail::kInitCapacity);
+        _buffer.reserve(SIZE);
     }
 
     ~FixBuffer()
@@ -41,6 +44,8 @@ class FixBuffer
 
     size_t size() const noexcept { return _buffer.size(); }
 
+    size_t avail() const noexcept { return _buffer.capacity() - _buffer.size(); }
+
     const char* data() const noexcept { return _buffer.data(); }
 
     void append(const char* data, size_t len)
@@ -58,10 +63,13 @@ class FixBuffer
     std::string _buffer;
 };
 
+} // end of namespace detail
+
 class LogStream 
 {
     using self = LogStream;
  public:
+    using Buffer = detail::FixBuffer<detail::kSmallBuffer>;
     LogStream() = default;
     ~LogStream() = default;
     LogStream(const LogStream&) = delete;
@@ -125,7 +133,7 @@ class LogStream
     }
 
     void append(const char* data, size_t len) { _buffer.append(data, len); }
-    const FixBuffer& buffer() const noexcept { return _buffer; }
+    const Buffer& buffer() const noexcept { return _buffer; }
     void reset() { _buffer.reset(); }
  private:
     template <typename T>
@@ -136,7 +144,7 @@ class LogStream
     template <typename T>   
     void formatInteger(T);
 
-    FixBuffer _buffer;
+    Buffer _buffer;
 };
 
 

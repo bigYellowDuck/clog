@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "Localtime.h"
 #include "BlockingQueue.h"
+#include "AsyncLogger.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -14,6 +15,9 @@
 
 namespace clog
 {
+AsyncLogger logger;
+/*------------------------*/
+
 std::thread logThread;
 bool _runing = false;
 BlockingQueue<std::string> queue;
@@ -65,23 +69,7 @@ inline LogStream& operator<<(LogStream&s ,Logger::SourceFile file)
     return s;
 }
 
-std::string getLogFileName()
-{
-    std::string filename("logfile");
-
-    char timebuf[32];
-    struct tm tm_time;
-    time_t now = time(NULL);
-    localtime_r(&now, &tm_time);
-    strftime(timebuf, sizeof(timebuf), ".%Y%m%d-%H%M%S", &tm_time);
-    filename += timebuf;
-
-    filename += ".log";
-
-    return filename;
-}
-
-const std::string g_logFileName = std::move(getLogFileName());
+const std::string g_logFileName = std::move(detail::getLogFileName());
 std::ofstream logStream(g_logFileName);
 
 void defaultOutput(const std::string& msg)
@@ -184,11 +172,26 @@ Logger::Logger(SourceFile file, int line, bool toAbort)
 {
 }
 
+/*
 Logger::~Logger()
 {
     _pImpl->finish();
-    const FixBuffer& buffer(_pImpl->_stream.buffer());
+    const detail::FixBuffer<detail::kSmallBuffer>& buffer(_pImpl->_stream.buffer());
     g_output(std::move(buffer.constBuffer()));
+    if (_pImpl->_level == FATAL)
+    {
+        abort();
+    }
+}
+*/
+
+Logger::~Logger()
+{
+    _pImpl->finish();
+    const detail::FixBuffer<detail::kSmallBuffer>& buffer(_pImpl->_stream.buffer());
+    
+    logger.append(buffer.data(), buffer.size());
+
     if (_pImpl->_level == FATAL)
     {
         abort();
@@ -212,10 +215,12 @@ void Logger::setLogLevel(Logger::LogLevel level) noexcept
 
 void Logger::setConcurrentMode()
 {
+/*    
     _runing = true;
     setOutput(concurrentOutput);
     logThread = std::move(std::thread(concurrentFunc));
-
+*/
+    logger.start();
 }
 
 void Logger::finishConcurrent()

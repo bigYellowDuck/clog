@@ -57,6 +57,23 @@ size_t convertHex(char buf[], uintptr_t value)
     return p - buf;
 }
 */
+
+std::string getLogFileName()
+{
+    std::string filename("logfile");
+
+    char timebuf[32];
+    struct tm tm_time;
+    time_t now = time(NULL);
+    localtime_r(&now, &tm_time);
+    strftime(timebuf, sizeof(timebuf), ".%Y%m%d-%H%M%S", &tm_time);
+    filename += timebuf;
+
+    filename += ".log";
+
+    return filename;
+}
+
 }  // end of namespace detail
 
 

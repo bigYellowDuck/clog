@@ -68,7 +68,7 @@ inline Localtime addTime(const Localtime localtime, double seconds)
 }
 
 // 求两个时间到差值，返回秒数
-inline double timeDifferenece(Localtime time1, Localtime time2)
+inline double timeDifference(Localtime time1, Localtime time2)
 {
     long long diff;
     
