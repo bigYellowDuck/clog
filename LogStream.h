@@ -24,8 +24,9 @@ class FixBuffer
 {
  public:
     FixBuffer()
+        : cur_(data_)
     {
-        _buffer.reserve(SIZE);
+
     }
 
     ~FixBuffer()
@@ -37,30 +38,35 @@ class FixBuffer
     FixBuffer& operator=(const FixBuffer&) = delete;
 
     // 因为声明了析构函数，移动构造和移动赋值也会被删除
-   
-    std::string& buffer() noexcept { return _buffer; }
 
-    const std::string& constBuffer() const noexcept { return _buffer; }
+    size_t size() const noexcept { return cur_ - data_; }
 
-    size_t size() const noexcept { return _buffer.size(); }
+    size_t avail() const noexcept { return end() - cur_; }
 
-    size_t avail() const noexcept { return _buffer.capacity() - _buffer.size(); }
-
-    const char* data() const noexcept { return _buffer.data(); }
+    const char* data() const noexcept { return data_; }
 
     void append(const char* data, size_t len)
     {
-        _buffer.append(data, len);
+        if (avail() > len) 
+        {
+            memcpy(cur_, data, len);
+            cur_ += len;
+        }
     }
+    
+    char* current() const noexcept { return cur_; }
+    void add(size_t len) { cur_ += len; }
 
     std::string toString() const
     {
-        return _buffer;
+        return std::string(data_, size());
     }
 
-    void reset() { _buffer.clear(); }
+    void reset() { cur_ = data_; }
  private:
-    std::string _buffer;
+    const char* end() const { return data_ + sizeof(data_); }
+    char data_[SIZE];
+    char *cur_;
 };
 
 } // end of namespace detail
@@ -136,10 +142,6 @@ class LogStream
     const Buffer& buffer() const noexcept { return _buffer; }
     void reset() { _buffer.reset(); }
  private:
-    template <typename T>
-    size_t convert(T);
-
-    size_t convertHex(uintptr_t);
 
     template <typename T>   
     void formatInteger(T);
