@@ -13,7 +13,7 @@ using namespace std;
 
 void tf()
 {
-    for (int i=0; i<20000; ++i) {
+    for (int i=0; i<100000; ++i) {
         LOG_TRACE << "test TRACE----------------------------";
         LOG_DEBUG << "test DEBUG----------------------------";
         LOG_INFO << "test INFO----------------------------------";
@@ -25,14 +25,14 @@ void tf()
 int main()
 {
     using namespace clog;
-    Logger::setLogLevel(Logger::DEBUG);
+    Logger::setLogLevel(Logger::TRACE);
     Logger::setConcurrentMode();
     Localtime begin(Localtime::now());
 
     thread t(tf);
     thread t2(tf);
     thread t3(tf);
-    for (int i=0; i<20000; ++i) {
+    for (int i=0; i<100000; ++i) {
         LOG_TRACE << "test TRACE----------------------------";
         LOG_DEBUG << "test DEBUG----------------------------";
         LOG_INFO << "test INFO----------------------------------";

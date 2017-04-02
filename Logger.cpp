@@ -223,13 +223,14 @@ void Logger::setConcurrentMode()
     logger.start();
 }
 
+/*
 void Logger::finishConcurrent()
 {
     _runing = false;
     queue.put("\0");
     logThread.join(); 
 }
-
+*/
 void Logger::setOutput(Logger::OutputFunc output) noexcept
 {
     g_output = output;
