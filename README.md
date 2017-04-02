@@ -19,3 +19,7 @@ LogStream.h/cpp 流对象，内部使用一个std::string作为缓冲区。<br>
 Localtime.h/cpp 当地时间对象，获取当地时间，使用的时`gettimeofday`和`localtime_r`。<br>
 BlockingQueu.h  阻塞队列，多线程模式下使用。<br>
 Logger.h/cpp    日志对象，单线程下把日志记录写到缓冲区中，多线程模式下，专门开了一个线程来记录日志，使用阻塞队列来传递日志消息。<br>
+
+### 优化
+一开始的那个使用BlockingQueue加STL库string的方法，测试写入效率只有30M/s，效率太低。<br>
+改用char数组封装缓冲区加上双缓存的方法，写入效率可达60M/s。<br>
